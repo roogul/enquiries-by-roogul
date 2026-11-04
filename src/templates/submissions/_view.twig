@@ -1,0 +1,165 @@
+{% extends '_layouts/cp' %}
+
+{% set selectedSubnavItem = 'submissions' %}
+{% set title = submission.getUiLabel() %}
+{% set crumbs = [
+    { label: craft.app.plugins.getPlugin('enquiries-by-roogul').settings.cpNavLabel|t('site'), url: url('enquiries-by-roogul') },
+] | merge(form ? [{ label: form.name, url: url('enquiries-by-roogul', { source: 'form:' ~ form.uid }) }] : []) %}
+
+{% block actionButton %}
+    <div class="flex">
+        {% if submission.isSpam() %}
+            <form method="post" accept-charset="UTF-8">
+                {{ csrfInput() }}
+                {{ actionInput('enquiries-by-roogul/submissions/resend') }}
+                {{ hiddenInput('id', submission.id) }}
+                <button type="submit" class="btn submit">{{ 'Not spam – send it'|t('enquiries-by-roogul') }}</button>
+            </form>
+        {% else %}
+            <form method="post" accept-charset="UTF-8">
+                {{ csrfInput() }}
+                {{ actionInput('enquiries-by-roogul/submissions/set-status') }}
+                {{ hiddenInput('id', submission.id) }}
+                {{ hiddenInput('status', 'spam') }}
+                <button type="submit" class="btn">{{ 'Mark as spam'|t('enquiries-by-roogul') }}</button>
+            </form>
+        {% endif %}
+
+        {% if canDelete %}
+            <form method="post" accept-charset="UTF-8" onsubmit="return confirm('{{ 'Delete this enquiry?'|t('enquiries-by-roogul')|e('js') }}');">
+                {{ csrfInput() }}
+                {{ actionInput('enquiries-by-roogul/submissions/delete') }}
+                {{ hiddenInput('id', submission.id) }}
+                <button type="submit" class="btn">{{ 'Delete'|t('app') }}</button>
+            </form>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block content %}
+    <table class="data fullwidth enq-values">
+        <tbody>
+            {% for row in submission.getDisplayValues() %}
+                <tr>
+                    <th scope="row">{{ row.label }}</th>
+                    <td>
+                        {% if row.value is empty %}
+                            <span class="light">—</span>
+                        {% elseif form and form.getField(row.handle).type ?? null == 'email' %}
+                            <a href="mailto:{{ row.value }}">{{ row.value }}</a>
+                        {% elseif form and form.getField(row.handle).type ?? null == 'phone' %}
+                            <a href="tel:{{ row.value|replace({' ': ''}) }}">{{ row.value }}</a>
+                        {% elseif form and form.getField(row.handle).type ?? null == 'url' %}
+                            <a href="{{ row.value }}" target="_blank" rel="noopener noreferrer">{{ row.value }}</a>
+                        {% else %}
+                            {{ row.value|nl2br }}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2 style="margin-top: 32px;">{{ 'Delivery'|t('enquiries-by-roogul') }}</h2>
+
+    {% if log|length %}
+        <table class="data fullwidth">
+            <thead>
+                <tr>
+                    <th scope="col">{{ 'Integration'|t('enquiries-by-roogul') }}</th>
+                    <th scope="col">{{ 'Status'|t('app') }}</th>
+                    <th scope="col">{{ 'Details'|t('enquiries-by-roogul') }}</th>
+                    <th scope="col">{{ 'Attempts'|t('enquiries-by-roogul') }}</th>
+                    <th scope="col">{{ 'Updated'|t('enquiries-by-roogul') }}</th>
+                    <td class="thin"></td>
+                </tr>
+            </thead>
+            <tbody>
+                {% for handle, row in log %}
+                    {% set integration = integrations[handle] ?? null %}
+                    {% set color = { success: 'green', failed: 'red', pending: 'orange' }[row.status] ?? 'disabled' %}
+                    <tr>
+                        <th scope="row">{{ integration ? integration.displayName() : handle }}</th>
+                        <td style="white-space: nowrap;"><span class="status {{ color }}"></span>{{ row.status|capitalize|t('enquiries-by-roogul') }}</td>
+                        <td class="enq-log-message">{{ row.message }}</td>
+                        <td>{{ row.attempts }}</td>
+                        <td>{{ row.dateUpdated|datetime('short') }}</td>
+                        <td class="thin">
+                            {% if integration and not submission.isSpam() %}
+                                <form method="post" accept-charset="UTF-8">
+                                    {{ csrfInput() }}
+                                    {{ actionInput('enquiries-by-roogul/submissions/resend') }}
+                                    {{ hiddenInput('id', submission.id) }}
+                                    {{ hiddenInput('integration', handle) }}
+                                    <button type="submit" class="btn small">{{ row.status == 'failed' ? 'Retry'|t('enquiries-by-roogul') : 'Resend'|t('enquiries-by-roogul') }}</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% elseif submission.isSpam() %}
+        <p class="light">{{ 'Spam isn’t sent anywhere.'|t('enquiries-by-roogul') }}</p>
+    {% else %}
+        <p class="light">{{ 'This form doesn’t send anywhere yet.'|t('enquiries-by-roogul') }}</p>
+    {% endif %}
+{% endblock %}
+
+{% block details %}
+    <div class="meta read-only">
+        <div class="data">
+            <h5 class="heading">{{ 'Status'|t('app') }}</h5>
+            <div class="value">{{ submission.getStatus() == 'spam' ? 'Spam'|t('enquiries-by-roogul') : 'Read'|t('enquiries-by-roogul') }}</div>
+        </div>
+        <div class="data">
+            <h5 class="heading">{{ 'Form'|t('enquiries-by-roogul') }}</h5>
+            <div class="value">{{ form ? form.name : '—' }}</div>
+        </div>
+        <div class="data">
+            <h5 class="heading">{{ 'Submitted'|t('enquiries-by-roogul') }}</h5>
+            <div class="value">{{ submission.dateCreated|datetime('short') }}</div>
+        </div>
+        {% if site and craft.app.isMultiSite %}
+            <div class="data">
+                <h5 class="heading">{{ 'Site'|t('app') }}</h5>
+                <div class="value">{{ site.name }}</div>
+            </div>
+        {% endif %}
+        {% if submission.referrer %}
+            <div class="data">
+                <h5 class="heading">{{ 'Page'|t('enquiries-by-roogul') }}</h5>
+                <div class="value"><a href="{{ submission.referrer }}" target="_blank" rel="noopener noreferrer" style="word-break: break-all;">{{ submission.referrer|replace('/^https?:\\/\\/[^\\/]+/', '') ?: '/' }}</a></div>
+            </div>
+        {% endif %}
+        {% if user %}
+            <div class="data">
+                <h5 class="heading">{{ 'User'|t('app') }}</h5>
+                <div class="value">{{ elementChip(user) }}</div>
+            </div>
+        {% endif %}
+        {% if submission.ipAddress %}
+            <div class="data">
+                <h5 class="heading">{{ 'IP address'|t('enquiries-by-roogul') }}</h5>
+                <div class="value"><code>{{ submission.ipAddress }}</code></div>
+            </div>
+        {% endif %}
+        <div class="data">
+            <h5 class="heading">{{ 'ID'|t('app') }}</h5>
+            <div class="value">{{ submission.id }}</div>
+        </div>
+    </div>
+    {% if submission.userAgent %}
+        <div class="meta read-only">
+            <div class="data">
+                <div class="value light smalltext" style="word-break: break-word;">{{ submission.userAgent }}</div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% css %}
+.enq-values th { width: 30%; vertical-align: top; }
+.enq-values td { white-space: normal; word-break: break-word; }
+.enq-log-message { white-space: normal; word-break: break-word; max-width: 420px; }
+{% endcss %}

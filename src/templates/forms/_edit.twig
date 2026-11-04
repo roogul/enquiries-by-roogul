@@ -1,0 +1,193 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+
+{% set selectedSubnavItem = 'forms' %}
+{% set fullPageForm = not readOnly %}
+{% set title = isNew ? 'New form'|t('enquiries-by-roogul') : form.name %}
+{% set crumbs = [
+    { label: 'Forms'|t('enquiries-by-roogul'), url: url('enquiries-by-roogul/forms') },
+] %}
+
+{% set notificationIntegrations = integrations|filter(i => i.category() == 'notification') %}
+{% set otherIntegrations = integrations|filter(i => i.category() != 'notification') %}
+
+{% set tabs = {
+    settings: { label: 'Settings'|t('enquiries-by-roogul'), url: '#enq-tab-settings', class: form.hasErrors('name') or form.hasErrors('handle') ? 'error' },
+    fields: { label: 'Fields'|t('enquiries-by-roogul'), url: '#enq-tab-fields', class: form.hasErrors('fields') ? 'error' },
+    notifications: { label: 'Notifications'|t('enquiries-by-roogul'), url: '#enq-tab-notifications', class: notificationIntegrations|filter(i => form.hasErrors('integrations.' ~ i.handle()))|length ? 'error' },
+    integrations: { label: 'Integrations'|t('enquiries-by-roogul'), url: '#enq-tab-integrations', class: otherIntegrations|filter(i => form.hasErrors('integrations.' ~ i.handle()))|length ? 'error' },
+    spam: { label: 'Spam'|t('enquiries-by-roogul'), url: '#enq-tab-spam' },
+} %}
+
+{% macro integrationBlock(form, integration, readOnly) %}
+    {% import '_includes/forms' as forms %}
+    {% set handle = integration.handle() %}
+    {% set config = form.getIntegrationConfig(handle) %}
+    {% set enabled = config.enabled ?? false %}
+    {% set errors = form.getErrors('integrations.' ~ handle) %}
+
+    <div class="enq-integration{{ errors|length ? ' has-errors' }}">
+        <div class="enq-integration-header">
+            <div>
+                <h3>{{ integration.displayName() }}</h3>
+                {% if integration.description() %}<p class="light">{{ integration.description() }}</p>{% endif %}
+            </div>
+            {% if integration.isConfigured() %}
+                {{ forms.lightswitch({
+                    name: 'integrations[' ~ handle ~ '][enabled]',
+                    on: enabled,
+                    toggle: 'enq-' ~ handle ~ '-settings',
+                    disabled: readOnly,
+                    labelId: 'enq-' ~ handle ~ '-label',
+                }) }}
+            {% else %}
+                <a href="{{ url('settings/plugins/enquiries-by-roogul') }}" class="btn small">{{ 'Add credentials'|t('enquiries-by-roogul') }}</a>
+            {% endif %}
+        </div>
+
+        {% if errors|length %}
+            <ul class="errors">{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        {% endif %}
+
+        {% if integration.isConfigured() %}
+            <div id="enq-{{ handle }}-settings" class="enq-integration-settings{{ not enabled ? ' hidden' }}">
+                {{ integration.getFormSettingsHtml(form, config)|raw }}
+            </div>
+        {% endif %}
+    </div>
+{% endmacro %}
+
+{% block content %}
+    {% if not readOnly %}
+        {{ actionInput('enquiries-by-roogul/forms/save') }}
+        {{ redirectInput('enquiries-by-roogul/forms') }}
+        {% if form.uid %}{{ hiddenInput('uid', form.uid) }}{% endif %}
+    {% endif %}
+
+    {% if readOnly %}
+        <blockquote class="note warning" style="margin-bottom: 20px;">{{ 'Admin changes are disabled here, so this form is read-only.'|t('enquiries-by-roogul') }}</blockquote>
+    {% endif %}
+
+    {% if form.hasErrors() %}
+        <ul class="errors" style="margin-bottom: 20px;">
+            {% for error in form.getErrors('integrations') %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+    {% endif %}
+
+    <div id="enq-tab-settings">
+        {{ forms.textField({
+            first: true,
+            label: 'Name'|t('app'),
+            id: 'name',
+            name: 'name',
+            value: form.name,
+            errors: form.getErrors('name'),
+            autofocus: true,
+            required: true,
+            disabled: readOnly,
+        }) }}
+
+        {{ forms.textField({
+            label: 'Handle'|t('app'),
+            instructions: 'Used in templates: `craft.enquiries.inputs(\'{handle}\')`.'|t('enquiries-by-roogul', { handle: form.handle ?: 'contact' }),
+            id: 'handle',
+            name: 'handle',
+            value: form.handle,
+            errors: form.getErrors('handle'),
+            class: 'code',
+            required: true,
+            disabled: readOnly,
+        }) }}
+
+        {{ forms.textField({
+            label: 'Success message'|t('enquiries-by-roogul'),
+            instructions: 'Returned to AJAX requests and available as `craft.enquiries.success(\'handle\')` after a normal submit.'|t('enquiries-by-roogul'),
+            name: 'formSuccessMessage',
+            value: form.successMessage,
+            placeholder: 'Thanks, your message has been sent.'|t('enquiries-by-roogul'),
+            disabled: readOnly,
+        }) }}
+
+        {{ forms.textField({
+            label: 'Redirect to'|t('enquiries-by-roogul'),
+            instructions: 'Optional. Where to send visitors after a normal (non-AJAX) submit. Leave blank to return to the same page. A `redirect` option in the template takes priority.'|t('enquiries-by-roogul'),
+            name: 'formRedirect',
+            value: form.redirect,
+            placeholder: '/contact/thanks',
+            disabled: readOnly,
+        }) }}
+
+        {{ forms.textField({
+            label: 'Submission label'|t('enquiries-by-roogul'),
+            instructions: 'How submissions are titled in the Control Panel, e.g. `{name} – {company}`. Leave blank to use the name or email.'|t('enquiries-by-roogul'),
+            name: 'titleFormat',
+            value: form.titleFormat,
+            disabled: readOnly,
+        }) }}
+    </div>
+
+    <div id="enq-tab-fields" class="hidden">
+        {{ forms.editableTableField({
+            label: 'Fields'|t('enquiries-by-roogul'),
+            instructions: 'The fields your template posts, as `fields[handle]`. Anything not listed here is ignored. The handle, type and required setting decide how each field is validated.'|t('enquiries-by-roogul'),
+            id: 'form-fields',
+            name: 'fields',
+            cols: {
+                handle: { heading: 'Handle'|t('app'), type: 'singleline', code: true, width: '25%' },
+                label: { heading: 'Label'|t('app'), type: 'singleline', width: '35%' },
+                type: { heading: 'Type'|t('app'), type: 'select', options: fieldTypes|map((label, value) => { label: label, value: value })|values },
+                required: { heading: 'Required'|t('app'), type: 'lightswitch', thin: true },
+            },
+            rows: form.fields,
+            allowAdd: not readOnly,
+            allowDelete: not readOnly,
+            allowReorder: not readOnly,
+            static: readOnly,
+            addRowLabel: 'Add a field'|t('enquiries-by-roogul'),
+            errors: form.getErrors('fields'),
+        }) }}
+
+        <p class="light">{{ 'Field pickers on the Notifications and Integrations tabs update after you save.'|t('enquiries-by-roogul') }}</p>
+    </div>
+
+    <div id="enq-tab-notifications" class="hidden">
+        {% for integration in notificationIntegrations %}
+            {{ _self.integrationBlock(form, integration, readOnly) }}
+        {% endfor %}
+    </div>
+
+    <div id="enq-tab-integrations" class="hidden">
+        {% for integration in otherIntegrations %}
+            {{ _self.integrationBlock(form, integration, readOnly) }}
+        {% endfor %}
+    </div>
+
+    <div id="enq-tab-spam" class="hidden">
+        <p>{{ 'Every form gets a hidden honeypot field and a minimum-time check. Spam is quietly marked as spam and never sent anywhere.'|t('enquiries-by-roogul') }}</p>
+
+        {{ forms.lightswitchField({
+            label: 'Cloudflare Turnstile'|t('enquiries-by-roogul'),
+            instructions: turnstileReady
+                ? 'Adds a Turnstile check. `craft.enquiries.inputs()` outputs the widget for you.'|t('enquiries-by-roogul')
+                : 'Add your Turnstile keys in the plugin settings first.'|t('enquiries-by-roogul'),
+            name: 'turnstile',
+            on: form.turnstile,
+            disabled: readOnly or not turnstileReady,
+        }) }}
+    </div>
+{% endblock %}
+
+{% if isNew and not readOnly %}
+    {% js %}
+        new Craft.HandleGenerator('#name', '#handle');
+    {% endjs %}
+{% endif %}
+
+{% css %}
+.enq-integration { border: 1px solid var(--hairline-color, #e3e5e8); border-radius: var(--large-border-radius, 5px); padding: 16px 20px; margin-bottom: 16px; }
+.enq-integration.has-errors { border-color: var(--error-color, #cf1124); }
+.enq-integration-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.enq-integration-header h3 { margin: 0 0 2px; }
+.enq-integration-header p { margin: 0; }
+.enq-integration-settings { margin-top: 20px; padding-top: 4px; border-top: 1px solid var(--hairline-color, #e3e5e8); }
+{% endcss %}

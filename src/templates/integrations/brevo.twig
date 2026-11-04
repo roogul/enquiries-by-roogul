@@ -1,0 +1,42 @@
+{% import '_includes/forms' as forms %}
+
+{{ forms.selectField({
+    label: 'Email field'|t('enquiries-by-roogul'),
+    name: namespace ~ '[emailField]',
+    value: config.emailField,
+    options: emailFieldOptions,
+    required: true,
+}) }}
+
+{{ forms.editableTableField({
+    label: 'Attributes'|t('enquiries-by-roogul'),
+    instructions: 'Map form fields to Brevo contact attributes, e.g. FIRSTNAME, LASTNAME, SMS. Custom attributes must exist in Brevo first (Contacts → Settings → Contact attributes).'|t('enquiries-by-roogul'),
+    id: 'brevo-attributes',
+    name: namespace ~ '[attributes]',
+    cols: {
+        from: { heading: 'Form field'|t('enquiries-by-roogul'), type: 'select', options: fieldOptions },
+        to: { heading: 'Brevo attribute'|t('enquiries-by-roogul'), type: 'singleline', code: true },
+    },
+    rows: config.attributes,
+    allowAdd: true,
+    allowDelete: true,
+    allowReorder: true,
+    addRowLabel: 'Add an attribute'|t('enquiries-by-roogul'),
+}) }}
+
+{{ forms.textField({
+    label: 'List IDs'|t('enquiries-by-roogul'),
+    instructions: 'Comma-separated. Find them under Contacts → Lists.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[listIds]',
+    value: config.listIds,
+    placeholder: '2, 7',
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Update existing contacts'|t('enquiries-by-roogul'),
+    instructions: 'When off, submissions from an email that’s already in Brevo will fail.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[updateEnabled]',
+    on: config.updateEnabled,
+}) }}
+
+{% include 'enquiries-by-roogul/integrations/_onlyIf' %}

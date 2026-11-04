@@ -1,0 +1,58 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Forms'|t('enquiries-by-roogul') %}
+{% set selectedSubnavItem = 'forms' %}
+
+{% block actionButton %}
+    {% if not readOnly %}
+        <a href="{{ url('enquiries-by-roogul/forms/new') }}" class="btn submit add icon">{{ 'New form'|t('enquiries-by-roogul') }}</a>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if readOnly %}
+        <div class="readable" style="margin-bottom: 16px;">
+            <blockquote class="note warning">{{ 'Forms can only be changed where admin changes are allowed. Make changes locally and deploy them with project config.'|t('enquiries-by-roogul') }}</blockquote>
+        </div>
+    {% endif %}
+
+    {% if forms|length %}
+        <table class="data fullwidth" id="enq-forms">
+            <thead>
+                <tr>
+                    <th scope="col">{{ 'Name'|t('app') }}</th>
+                    <th scope="col">{{ 'Handle'|t('app') }}</th>
+                    <th scope="col">{{ 'Fields'|t('enquiries-by-roogul') }}</th>
+                    <th scope="col">{{ 'Sends to'|t('enquiries-by-roogul') }}</th>
+                    <th scope="col">{{ 'Submissions'|t('enquiries-by-roogul') }}</th>
+                    {% if not readOnly %}<td class="thin"></td>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for form in forms %}
+                    {% set enabled = integrations|filter(i => form.isIntegrationEnabled(i.handle())) %}
+                    <tr data-id="{{ form.id }}" data-name="{{ form.name }}">
+                        <th scope="row"><a href="{{ form.getCpEditUrl() }}">{{ form.name }}</a></th>
+                        <td><code>{{ form.handle }}</code></td>
+                        <td>{{ form.fields|length }}</td>
+                        <td>{{ enabled|map(i => i.displayName())|join(', ') ?: '<span class="light">—</span>' }}</td>
+                        <td><a href="{{ url('enquiries-by-roogul', { source: 'form:' ~ form.uid }) }}">{{ craft.enquiries.submissions({ formId: form.id, status: null }).count() }}</a></td>
+                        {% if not readOnly %}<td class="thin"><a class="delete icon" title="{{ 'Delete'|t('app') }}" role="button"></a></td>{% endif %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="zilch">
+            <p>{{ 'No forms yet.'|t('enquiries-by-roogul') }}</p>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% js %}
+new Craft.AdminTable({
+    tableSelector: '#enq-forms',
+    deleteAction: 'enquiries-by-roogul/forms/delete',
+    confirmDeleteMessage: '{{ 'Delete “{name}” and all of its submissions? This can’t be undone.'|t('enquiries-by-roogul')|e('js') }}',
+});
+{% endjs %}

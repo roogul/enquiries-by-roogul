@@ -1,0 +1,17 @@
+{% extends '_layouts/elementindex' %}
+
+{% set title = craft.app.plugins.getPlugin('enquiries-by-roogul').settings.cpNavLabel|t('site') %}
+{% set elementType = 'roogul\\enquiries\\elements\\Submission' %}
+{% set selectedSubnavItem = 'submissions' %}
+
+{% block contextMenu %}
+    {% if failedCount %}
+        <span class="enq-failed-pill" title="{{ 'Open an enquiry to see the error and retry it.'|t('enquiries-by-roogul') }}">
+            <span class="status red"></span>{{ '{count, plural, =1{1 failed delivery} other{# failed deliveries}}'|t('enquiries-by-roogul', { count: failedCount }) }}
+        </span>
+    {% endif %}
+{% endblock %}
+
+{% css %}
+.enq-failed-pill { display: inline-flex; align-items: center; font-size: 13px; color: var(--error-color, #cf1124); }
+{% endcss %}

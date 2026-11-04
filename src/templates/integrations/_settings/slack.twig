@@ -1,0 +1,10 @@
+{% import '_includes/forms' as forms %}
+
+{{ forms.autosuggestField({
+    label: 'Default webhook URL'|t('enquiries-by-roogul'),
+    instructions: 'Optional. An incoming webhook from your Slack app. Forms can override it to post to a different channel.'|t('enquiries-by-roogul'),
+    name: 'integrations[slack][webhookUrl]',
+    value: settings.webhookUrl ?? '',
+    suggestEnvVars: true,
+    placeholder: '$SLACK_WEBHOOK_URL',
+}) }}

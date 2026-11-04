@@ -1,0 +1,10 @@
+{% import '_includes/forms' as forms %}
+
+{{ forms.autosuggestField({
+    label: 'API key'|t('enquiries-by-roogul'),
+    instructions: 'From Brevo: SMTP & API → API keys.'|t('enquiries-by-roogul'),
+    name: 'integrations[brevo][apiKey]',
+    value: settings.apiKey ?? '',
+    suggestEnvVars: true,
+    placeholder: '$BREVO_API_KEY',
+}) }}

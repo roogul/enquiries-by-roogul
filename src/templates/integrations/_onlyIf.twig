@@ -1,0 +1,9 @@
+{% import '_includes/forms' as forms %}
+
+{{ forms.selectField({
+    label: 'Only send when…'|t('enquiries-by-roogul'),
+    instructions: 'Optional. Only send when this field is ticked or filled in, e.g. a marketing consent checkbox.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[onlyIfField]',
+    value: config.onlyIfField ?? '',
+    options: fieldOptions|map(o => o.value ? o : { label: 'Always send'|t('enquiries-by-roogul'), value: '' }),
+}) }}

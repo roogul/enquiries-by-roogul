@@ -1,0 +1,20 @@
+{% import '_includes/forms' as forms %}
+
+{{ forms.autosuggestField({
+    label: 'URL'|t('enquiries-by-roogul'),
+    name: namespace ~ '[url]',
+    value: config.url,
+    suggestEnvVars: true,
+    placeholder: 'https://hooks.zapier.com/…',
+    required: true,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Signing secret'|t('enquiries-by-roogul'),
+    instructions: 'Optional. When set, requests include `X-Enquiries-Signature: sha256=…`, an HMAC of the body, so your endpoint can check they came from this site.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[secret]',
+    value: config.secret,
+    suggestEnvVars: true,
+}) }}
+
+{% include 'enquiries-by-roogul/integrations/_onlyIf' %}

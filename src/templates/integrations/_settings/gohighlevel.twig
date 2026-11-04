@@ -1,0 +1,29 @@
+{% import '_includes/forms' as forms %}
+
+{{ forms.autosuggestField({
+    label: 'Private Integration token'|t('enquiries-by-roogul'),
+    instructions: 'In the sub-account: Settings → Private Integrations → Create. Give it the **contacts.write** scope.'|t('enquiries-by-roogul'),
+    name: 'integrations[gohighlevel][token]',
+    value: settings.token ?? '',
+    suggestEnvVars: true,
+    placeholder: '$GHL_TOKEN',
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Location ID'|t('enquiries-by-roogul'),
+    instructions: 'The sub-account ID, from Settings → Business Profile or the URL.'|t('enquiries-by-roogul'),
+    name: 'integrations[gohighlevel][locationId]',
+    value: settings.locationId ?? '',
+    suggestEnvVars: true,
+    placeholder: '$GHL_LOCATION_ID',
+}) }}
+
+{{ forms.textField({
+    label: 'API version'|t('enquiries-by-roogul'),
+    instructions: 'Sent as the `Version` header. Leave blank for {version}.'|t('enquiries-by-roogul', { version: defaultVersion }),
+    name: 'integrations[gohighlevel][apiVersion]',
+    value: settings.apiVersion ?? '',
+    placeholder: defaultVersion,
+    code: true,
+    size: 12,
+}) }}

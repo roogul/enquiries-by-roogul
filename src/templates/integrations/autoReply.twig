@@ -1,0 +1,44 @@
+{% import '_includes/forms' as forms %}
+
+{{ forms.selectField({
+    label: 'Send to'|t('enquiries-by-roogul'),
+    instructions: 'The Email field holding the submitter’s address.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[toField]',
+    value: config.toField,
+    options: emailFieldOptions,
+    required: true,
+}) }}
+
+{{ forms.textField({
+    label: 'Subject'|t('enquiries-by-roogul'),
+    name: namespace ~ '[subject]',
+    value: config.subject,
+    required: true,
+}) }}
+
+{{ forms.textareaField({
+    label: 'Message'|t('enquiries-by-roogul'),
+    instructions: 'Plain text; blank lines start a new paragraph. Use `{fieldHandle}` for submitted values and `{siteName}` for the site name.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[body]',
+    value: config.body,
+    rows: 8,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Reply-to address'|t('enquiries-by-roogul'),
+    instructions: 'Optional. Where replies to the auto-reply should go.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[replyTo]',
+    value: config.replyTo,
+    suggestEnvVars: true,
+}) }}
+
+{{ forms.textField({
+    label: 'Custom template'|t('enquiries-by-roogul'),
+    instructions: 'Optional. A site template to use instead of the message above. Gets `submission`, `form` and `values`.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[template]',
+    value: config.template,
+    placeholder: '_emails/enquiry-confirmation',
+    code: true,
+}) }}
+
+{% include 'enquiries-by-roogul/integrations/_onlyIf' %}

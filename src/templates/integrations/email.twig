@@ -1,0 +1,37 @@
+{% import '_includes/forms' as forms %}
+
+{{ forms.autosuggestField({
+    label: 'Recipients'|t('enquiries-by-roogul'),
+    instructions: 'Comma-separated email addresses, or an environment variable.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[recipients]',
+    value: config.recipients,
+    suggestEnvVars: true,
+    placeholder: 'hello@example.com, sales@example.com',
+    required: true,
+}) }}
+
+{{ forms.textField({
+    label: 'Subject'|t('enquiries-by-roogul'),
+    instructions: 'Use `{fieldHandle}` for submitted values, e.g. `New enquiry from {name}`.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[subject]',
+    value: config.subject,
+}) }}
+
+{{ forms.selectField({
+    label: 'Reply-to field'|t('enquiries-by-roogul'),
+    instructions: 'Hitting reply goes to the address in this field.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[replyToField]',
+    value: config.replyToField,
+    options: emailFieldOptions,
+}) }}
+
+{{ forms.textField({
+    label: 'Custom template'|t('enquiries-by-roogul'),
+    instructions: 'Optional. A site template for the email body. Gets `submission`, `form` and `values`.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[template]',
+    value: config.template,
+    placeholder: '_emails/enquiry',
+    code: true,
+}) }}
+
+{% include 'enquiries-by-roogul/integrations/_onlyIf' %}

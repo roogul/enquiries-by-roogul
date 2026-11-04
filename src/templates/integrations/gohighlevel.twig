@@ -1,0 +1,60 @@
+{% import '_includes/forms' as forms %}
+
+{% set ghlFieldOptions = [{ label: '', value: '' }] %}
+{% for key, label in integration.contactFields() %}
+    {% set ghlFieldOptions = ghlFieldOptions|push({ label: label ~ ' (' ~ key ~ ')', value: key }) %}
+{% endfor %}
+
+{{ forms.editableTableField({
+    label: 'Contact fields'|t('enquiries-by-roogul'),
+    instructions: 'Map your form fields to GoHighLevel contact fields. Email or Phone is required to match contacts.'|t('enquiries-by-roogul'),
+    id: 'ghl-mapping',
+    name: namespace ~ '[mapping]',
+    cols: {
+        from: { heading: 'Form field'|t('enquiries-by-roogul'), type: 'select', options: fieldOptions },
+        to: { heading: 'GoHighLevel field'|t('enquiries-by-roogul'), type: 'select', options: ghlFieldOptions },
+    },
+    rows: config.mapping,
+    allowAdd: true,
+    allowDelete: true,
+    allowReorder: true,
+    addRowLabel: 'Add a field'|t('enquiries-by-roogul'),
+}) }}
+
+{{ forms.editableTableField({
+    label: 'Custom fields'|t('enquiries-by-roogul'),
+    instructions: 'Optional. Use the custom field’s ID (most reliable) or its key, e.g. `contact.enquiry_type`. Both are under Settings → Custom Fields.'|t('enquiries-by-roogul'),
+    id: 'ghl-custom',
+    name: namespace ~ '[customFields]',
+    cols: {
+        from: { heading: 'Form field'|t('enquiries-by-roogul'), type: 'select', options: fieldOptions },
+        to: { heading: 'Custom field key or ID'|t('enquiries-by-roogul'), type: 'singleline', code: true },
+    },
+    rows: config.customFields,
+    allowAdd: true,
+    allowDelete: true,
+    allowReorder: true,
+    addRowLabel: 'Add a custom field'|t('enquiries-by-roogul'),
+}) }}
+
+{{ forms.textField({
+    label: 'Tags'|t('enquiries-by-roogul'),
+    instructions: 'Comma-separated. Added to the contact, keeping any it already has. `{fieldHandle}` works here.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[tags]',
+    value: config.tags,
+}) }}
+
+{{ forms.textField({
+    label: 'Source'|t('enquiries-by-roogul'),
+    name: namespace ~ '[source]',
+    value: config.source,
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Add the enquiry as a note'|t('enquiries-by-roogul'),
+    instructions: 'Adds every submitted field to the contact as a note, so the full message is in the CRM.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[addNote]',
+    on: config.addNote,
+}) }}
+
+{% include 'enquiries-by-roogul/integrations/_onlyIf' %}

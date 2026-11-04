@@ -1,0 +1,19 @@
+{% import '_includes/forms' as forms %}
+
+{{ forms.autosuggestField({
+    label: 'Webhook URL'|t('enquiries-by-roogul'),
+    instructions: 'Leave blank to use the default from the plugin settings.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[webhookUrl]',
+    value: config.webhookUrl,
+    suggestEnvVars: true,
+    placeholder: 'https://hooks.slack.com/services/…',
+}) }}
+
+{{ forms.textField({
+    label: 'Message title'|t('enquiries-by-roogul'),
+    instructions: 'Use `{fieldHandle}` for submitted values.'|t('enquiries-by-roogul'),
+    name: namespace ~ '[title]',
+    value: config.title,
+}) }}
+
+{% include 'enquiries-by-roogul/integrations/_onlyIf' %}
