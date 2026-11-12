@@ -2,7 +2,6 @@
   "name": "roogul/enquiries-by-roogul",
   "description": "Store contact form submissions coded in your own Twig templates, and send them to email, Slack, GoHighLevel, Brevo and webhooks.",
   "type": "craft-plugin",
-  "version": "1.0.0",
   "keywords": ["craft", "cms", "forms", "contact", "enquiries", "gohighlevel", "brevo", "slack"],
   "license": "MIT",
   "authors": [

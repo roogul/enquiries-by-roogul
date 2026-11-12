@@ -16,6 +16,7 @@ use roogul\enquiries\elements\actions\Resend;
 use roogul\enquiries\elements\actions\SetSubmissionStatus;
 use roogul\enquiries\elements\db\SubmissionQuery;
 use roogul\enquiries\exporters\SubmissionsExporter;
+use roogul\enquiries\helpers\Urls;
 use roogul\enquiries\migrations\Install;
 use roogul\enquiries\models\Form;
 use roogul\enquiries\Plugin;
@@ -289,10 +290,33 @@ class Submission extends Element
         return !$this->hasErrors();
     }
 
+    /**
+     * The stored referrer when it is an http(s) URL, otherwise null.
+     * Rows saved before that check can still hold another scheme.
+     */
+    public function getSafeReferrer(): ?string
+    {
+        return Urls::httpUrl($this->referrer);
+    }
+
+    /**
+     * http(s) URL safe to use as an href, or null. Used for submitted URL fields.
+     */
+    public function safeHttpUrl(?string $url): ?string
+    {
+        return Urls::httpUrl($url);
+    }
+
     // Saving -------------------------------------------------------------
 
     public function beforeSave(bool $isNew): bool
     {
+        $this->referrer = Urls::httpUrl($this->referrer);
+
+        if ($this->referrer !== null) {
+            $this->referrer = mb_substr($this->referrer, 0, 2048);
+        }
+
         $form = $this->getForm();
 
         if ($form) {
@@ -547,7 +571,15 @@ class Submission extends Element
             case 'email':
                 return $this->email ? Html::a(Html::encode($this->email), 'mailto:' . $this->email) : '';
             case 'referrer':
-                return $this->referrer ? Html::a(Html::encode(mb_strimwidth(parse_url($this->referrer, PHP_URL_PATH) ?: $this->referrer, 0, 50, '…')), $this->referrer, ['target' => '_blank', 'rel' => 'noopener']) : '';
+                $url = $this->getSafeReferrer();
+
+                if (!$url) {
+                    return $this->referrer ? Html::encode(mb_strimwidth($this->referrer, 0, 50, '…')) : '';
+                }
+
+                $label = parse_url($url, PHP_URL_PATH) ?: $url;
+
+                return Html::a(Html::encode(mb_strimwidth($label, 0, 50, '…')), $url, ['target' => '_blank', 'rel' => 'noopener noreferrer']);
             case 'ipAddress':
                 return Html::encode((string)$this->ipAddress);
             case 'sync':

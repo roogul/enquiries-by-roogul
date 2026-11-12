@@ -69,7 +69,7 @@ class Webhook extends BaseIntegration
                 'uid' => $submission->uid,
                 'dateCreated' => DateTimeHelper::toIso8601($submission->dateCreated),
                 'site' => Craft::$app->getSites()->getSiteById($submission->sourceSiteId ?? 0)?->handle,
-                'referrer' => $submission->referrer,
+                'referrer' => $submission->getSafeReferrer(),
                 'cpUrl' => $submission->getCpEditUrl(),
             ],
             'fields' => $submission->getValues(),

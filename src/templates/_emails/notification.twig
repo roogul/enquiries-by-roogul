@@ -25,10 +25,10 @@
                 </table>
             </td>
         </tr>
-        {% if submission.referrer or cpUrl %}
+        {% if submission.safeReferrer or cpUrl %}
             <tr>
                 <td style="padding:0 28px 24px;font-size:12px;color:#606d7b;">
-                    {% if submission.referrer %}{{ 'Sent from {url}'|t('enquiries-by-roogul', { url: submission.referrer }) }}<br>{% endif %}
+                    {% if submission.safeReferrer %}{{ 'Sent from {url}'|t('enquiries-by-roogul', { url: submission.safeReferrer }) }}<br>{% endif %}
                     {% if cpUrl %}<a href="{{ cpUrl }}" style="color:#0b69a3;">{{ 'View in Craft'|t('enquiries-by-roogul') }}</a>{% endif %}
                 </td>
             </tr>

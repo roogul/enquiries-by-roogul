@@ -50,7 +50,12 @@
                         {% elseif form and form.getField(row.handle).type ?? null == 'phone' %}
                             <a href="tel:{{ row.value|replace({' ': ''}) }}">{{ row.value }}</a>
                         {% elseif form and form.getField(row.handle).type ?? null == 'url' %}
-                            <a href="{{ row.value }}" target="_blank" rel="noopener noreferrer">{{ row.value }}</a>
+                            {% set safeUrl = submission.safeHttpUrl(row.value) %}
+                            {% if safeUrl %}
+                                <a href="{{ safeUrl }}" target="_blank" rel="noopener noreferrer">{{ row.value }}</a>
+                            {% else %}
+                                {{ row.value }}
+                            {% endif %}
                         {% else %}
                             {{ row.value|nl2br }}
                         {% endif %}
@@ -129,7 +134,13 @@
         {% if submission.referrer %}
             <div class="data">
                 <h5 class="heading">{{ 'Page'|t('enquiries-by-roogul') }}</h5>
-                <div class="value"><a href="{{ submission.referrer }}" target="_blank" rel="noopener noreferrer" style="word-break: break-all;">{{ submission.referrer|replace('/^https?:\\/\\/[^\\/]+/', '') ?: '/' }}</a></div>
+                <div class="value">
+                    {% if submission.safeReferrer %}
+                        <a href="{{ submission.safeReferrer }}" target="_blank" rel="noopener noreferrer" style="word-break: break-all;">{{ submission.safeReferrer|replace('/^https?:\\/\\/[^\\/]+/', '') ?: '/' }}</a>
+                    {% else %}
+                        {{ submission.referrer }}
+                    {% endif %}
+                </div>
             </div>
         {% endif %}
         {% if user %}

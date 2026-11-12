@@ -1,5 +1,14 @@
 # Release Notes for Enquiries by ROOGUL
 
+## 1.0.1 - 2026-11-12
+
+### Fixed
+- Referrers are stored and linked only when they are http or https URLs. A crafted Referer header can no longer run script when an admin clicks the page link in the control panel.
+- URL fields in the submission view are linked only for http or https values.
+- CSV export neutralises cells that spreadsheets would treat as formulas.
+
+Sites already on 1.0.0 clear unsafe stored referrers when Craft runs the 1.0.1 migration.
+
 ## 1.0.0 - 2026-11-03
 
 ### Added

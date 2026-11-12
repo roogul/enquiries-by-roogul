@@ -7,6 +7,7 @@ use craft\base\ElementExporter;
 use craft\elements\db\ElementQueryInterface;
 use craft\helpers\DateTimeHelper;
 use roogul\enquiries\elements\Submission;
+use roogul\enquiries\helpers\Spreadsheet;
 
 /**
  * Flattens submissions into one column per field, so CSV/Excel exports are usable.
@@ -37,13 +38,15 @@ class SubmissionsExporter extends ElementExporter
                 $columns[$value['label']] = true;
             }
 
-            $row['Page'] = $submission->referrer;
+            $row['Page'] = $submission->getSafeReferrer();
             $rows[] = $row;
         }
 
         // Give every row the same columns, in a stable order.
         $template = array_fill_keys(array_merge(['ID', 'Form', 'Status', 'Date'], array_keys($columns), ['Page']), '');
 
-        return array_map(fn($row) => array_merge($template, $row), $rows);
+        return array_map(function(array $row) use ($template): array {
+            return array_map(Spreadsheet::cell(...), array_merge($template, $row));
+        }, $rows);
     }
 }

@@ -9,6 +9,7 @@ use craft\helpers\Db;
 use craft\web\Request;
 use DateTime;
 use roogul\enquiries\elements\Submission;
+use roogul\enquiries\helpers\Urls;
 use roogul\enquiries\migrations\Install;
 use roogul\enquiries\models\Form;
 use roogul\enquiries\Plugin;
@@ -37,7 +38,9 @@ class Submissions extends Component
         $submission->setValues($values);
         $submission->sourceSiteId = Craft::$app->getSites()->getCurrentSite()->id;
         $submission->userId = Craft::$app->getUser()->getId();
-        $submission->referrer = $request->getReferrer();
+        // The Referer header is client-controlled. Only an http(s) URL is kept,
+        // so it cannot be stored and later used as a control-panel link.
+        $submission->referrer = Urls::httpUrl($request->getReferrer());
 
         if ($settings->storeIpAddress) {
             $submission->ipAddress = $request->getUserIP();
